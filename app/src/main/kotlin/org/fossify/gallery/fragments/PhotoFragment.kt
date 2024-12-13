@@ -17,6 +17,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.RelativeLayout
 import androidx.exifinterface.media.ExifInterface.*
 import com.alexvasilkov.gestures.GestureController
@@ -678,7 +679,7 @@ class PhotoFragment : ViewPagerFragment() {
         if (newOrientation < 0) {
             newOrientation += 360
         }
-
+        //newOrientation += 270
         binding.subsamplingView.apply {
             setMaxTileSize(if (showHighestQuality) Integer.MAX_VALUE else 4096)
             setMinimumTileDpi(minTileDpi)
@@ -694,6 +695,14 @@ class PhotoFragment : ViewPagerFragment() {
 
             onImageEventListener = object : SubsamplingScaleImageView.OnImageEventListener {
                 override fun onReady() {
+                    val imageWidth = sWidth   // 获取源图片宽度
+                    val imageHeight = sHeight // 获取源图片高度
+                    
+                    // 如果是竖屏图片（宽小于高），直接旋转90度
+                    if (imageHeight > imageWidth) {
+                        orientation = (orientation + 270) % 360
+                    }
+                    
                     background = ColorDrawable(
                         if (config.blackBackground) {
                             Color.BLACK

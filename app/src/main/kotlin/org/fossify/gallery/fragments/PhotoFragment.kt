@@ -679,7 +679,7 @@ class PhotoFragment : ViewPagerFragment() {
         if (newOrientation < 0) {
             newOrientation += 360
         }
-        //newOrientation += 270
+        newOrientation += 270
         binding.subsamplingView.apply {
             setMaxTileSize(if (showHighestQuality) Integer.MAX_VALUE else 4096)
             setMinimumTileDpi(minTileDpi)
@@ -700,7 +700,8 @@ class PhotoFragment : ViewPagerFragment() {
                     
                     // 如果是竖屏图片（宽小于高），直接旋转90度
                     if (imageHeight > imageWidth) {
-                        orientation = (orientation + 270) % 360
+                        //orientation = (orientation + 90) % 360
+                        //mImageOrientation = ORIENTATION_ROTATE_90;
                     }
                     
                     background = ColorDrawable(

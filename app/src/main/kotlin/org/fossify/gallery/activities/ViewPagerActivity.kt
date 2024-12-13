@@ -137,7 +137,7 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
     private fun startAutoSwitch() {
         mIsAutoSwitchActive = true
         mAutoSwitchHandler.postDelayed({
-            if (mIsAutoSwitchActive) {
+             if (mIsAutoSwitchActive) {
                 goToNextMedium(true)
                 startAutoSwitch()
             }
@@ -255,7 +255,6 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
             }
         }
     }
-
     private fun setupOptionsMenu() {
         (binding.mediumViewerAppbar.layoutParams as RelativeLayout.LayoutParams).topMargin = statusBarHeight
         binding.mediumViewerToolbar.apply {

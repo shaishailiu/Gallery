@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.text.Html
 import android.view.View
+import android.view.WindowManager
 import android.widget.RelativeLayout
 import org.fossify.commons.dialogs.PropertiesDialog
 import org.fossify.commons.extensions.*
@@ -49,6 +50,7 @@ open class PhotoVideoActivity : SimpleActivity(), ViewPagerFragment.FragmentList
         requestMediaPermissions {
             checkIntent(savedInstanceState)
         }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     override fun onResume() {

@@ -104,6 +104,9 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
         setContentView(binding.root)
         setupOptionsMenu()
         refreshMenuItems()
+        // 保持屏幕常亮
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
 
         window.decorView.setBackgroundColor(getProperBackgroundColor())
         binding.topShadow.layoutParams.height = statusBarHeight + actionBarHeight

@@ -22,6 +22,9 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.RelativeLayout
 import android.widget.Toast
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import androidx.exifinterface.media.ExifInterface
 import androidx.print.PrintHelper
 import androidx.viewpager.widget.ViewPager
@@ -60,6 +63,11 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
     companion object {
         private const val REQUEST_VIEW_VIDEO = 1
         private const val SAVED_PATH = "current_path"
+
+        private const val ACTION_BLUETOOTH_KEY_EVENT = "android.intent.action.BLUETOOTH_KEY_EVENT"
+        private const val EXTRA_KEY_CODE = "key_code"
+        private const val KEY_UP = 19     // KEYCODE_DPAD_UP
+        private const val KEY_DOWN = 20   // KEYCODE_DPAD_DOWN
     }
 
     private var mPath = ""
@@ -82,6 +90,7 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
     private var mMediaFiles = ArrayList<Medium>()
     private var mFavoritePaths = ArrayList<String>()
     private var mIgnoredPaths = ArrayList<String>()
+    private var bluetoothReceiver: BroadcastReceiver? = null
 
     private val binding by viewBinding(ActivityMediumBinding::inflate)
 
@@ -104,8 +113,22 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
         }
 
         initFavorites()
+        setupBluetoothReceiver()
     }
-
+    private fun setupBluetoothReceiver() {
+        bluetoothReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == ACTION_BLUETOOTH_KEY_EVENT) {
+                    when (intent.getIntExtra(EXTRA_KEY_CODE, -1)) {
+                        KEY_UP -> runOnUiThread { goToPrevItem() }
+                        KEY_DOWN -> runOnUiThread { goToNextItem() }
+                    }
+                }
+            }
+        }
+        val intentFilter = IntentFilter(ACTION_BLUETOOTH_KEY_EVENT)
+        registerReceiver(bluetoothReceiver, intentFilter,RECEIVER_NOT_EXPORTED)
+    }
     override fun onResume() {
         super.onResume()
         if (!hasPermission(getPermissionToRequest())) {
@@ -150,6 +173,13 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
 
             if (intent.extras == null || isExternalIntent()) {
                 mMediaFiles.clear()
+            }
+        }
+        bluetoothReceiver?.let {
+            try {
+                unregisterReceiver(it)
+            } catch (e: Exception) {
+                // 忽略可能的异常
             }
         }
     }

@@ -92,6 +92,10 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
     private var mIgnoredPaths = ArrayList<String>()
     private var bluetoothReceiver: BroadcastReceiver? = null
 
+    private var mIsAutoSwitchActive = false
+    private var mAutoSwitchHandler = Handler()
+    private var mAutoSwitchInterval = 3000L // 3 seconds
+
     private val binding by viewBinding(ActivityMediumBinding::inflate)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,6 +118,7 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
 
         initFavorites()
         setupBluetoothReceiver()
+        //startAutoSwitch()
     }
     private fun setupBluetoothReceiver() {
         bluetoothReceiver = object : BroadcastReceiver() {
@@ -128,6 +133,20 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
         }
         val intentFilter = IntentFilter(ACTION_BLUETOOTH_KEY_EVENT)
         registerReceiver(bluetoothReceiver, intentFilter,RECEIVER_NOT_EXPORTED)
+    }
+    private fun startAutoSwitch() {
+        mIsAutoSwitchActive = true
+        mAutoSwitchHandler.postDelayed({
+            if (mIsAutoSwitchActive) {
+                goToNextMedium(true)
+                startAutoSwitch()
+            }
+        }, mAutoSwitchInterval)
+    }
+
+    private fun stopAutoSwitch() {
+        mIsAutoSwitchActive = false
+        mAutoSwitchHandler.removeCallbacksAndMessages(null)
     }
     override fun onResume() {
         super.onResume()
@@ -965,6 +984,15 @@ class ViewPagerActivity : SimpleActivity(), ViewPager.OnPageChangeListener, View
         binding.bottomActions.bottomResize.setOnLongClickListener { toast(org.fossify.commons.R.string.resize); true }
         binding.bottomActions.bottomResize.setOnClickListener {
             resizeImage()
+        }
+        binding.bottomActions.bottomAutoSwitch.setOnClickListener {
+            if (mIsAutoSwitchActive) {
+                stopAutoSwitch()
+                toast(R.string.auto_switch_disabled)
+            } else {
+                startAutoSwitch()
+                toast(R.string.auto_switch_enabled)
+            }
         }
     }
 

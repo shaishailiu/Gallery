@@ -17,10 +17,12 @@ import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import android.view.Gravity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.children
 import androidx.media3.common.AudioAttributes
@@ -360,7 +362,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         initTimeHolder()
         checkExtendedDetails()
         binding.videoSurfaceFrame.onGlobalLayout {
-            binding.videoSurfaceFrame.controller.resetState()
+            // Removed reset call
         }
     }
 
@@ -948,27 +950,67 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             return
         }
 
-        val videoProportion = mVideoSize.x.toFloat() / mVideoSize.y.toFloat()
         val display = requireActivity().windowManager.defaultDisplay
-        val screenWidth: Int
-        val screenHeight: Int
-
         val realMetrics = DisplayMetrics()
         display.getRealMetrics(realMetrics)
-        screenWidth = realMetrics.widthPixels
-        screenHeight = realMetrics.heightPixels
+        val screenWidth = realMetrics.widthPixels
+        val screenHeight = realMetrics.heightPixels
+
+        // 检查是否需要特殊处理（横屏模式下的竖屏视频）
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val isPortraitVideo = mVideoSize.y > mVideoSize.x
+        val needSpecialHandling = isLandscape && isPortraitVideo
+
+        // 计算视频比例
+        val videoProportion = if (needSpecialHandling) {
+            // 特殊处理：横屏模式下的竖屏视频，交换宽高比
+            mVideoSize.y.toFloat() / mVideoSize.x.toFloat()
+        } else {
+            // 默认情况：保持原始宽高比
+            mVideoSize.x.toFloat() / mVideoSize.y.toFloat()
+        }
 
         val screenProportion = screenWidth.toFloat() / screenHeight.toFloat()
 
-        mTextureView.layoutParams.apply {
-            if (videoProportion > screenProportion) {
-                width = screenWidth
-                height = (screenWidth.toFloat() / videoProportion).toInt()
-            } else {
-                width = (videoProportion * screenHeight.toFloat()).toInt()
-                height = screenHeight
-            }
-            mTextureView.layoutParams = this
+        // 计算初始视频尺寸
+        var (finalWidth, finalHeight) = if (videoProportion > screenProportion) {
+            // 如果视频比例大于屏幕比例，以屏幕宽度为基准
+            screenWidth to (screenWidth / videoProportion).toInt()
+        } else {
+            // 如果视频比例小于屏幕比例，以屏幕高度为基准
+            (screenHeight * videoProportion).toInt() to screenHeight
         }
+
+        // 在横屏模式下显示竖屏视频时，交换宽高
+        if (needSpecialHandling) {
+            val temp = finalWidth
+            finalWidth = finalHeight
+            finalHeight = temp
+        }
+
+        // 设置父容器GestureFrameLayout的尺寸
+        binding.videoSurfaceFrame.layoutParams = (binding.videoSurfaceFrame.layoutParams as RelativeLayout.LayoutParams).apply {
+            width = ViewGroup.LayoutParams.MATCH_PARENT
+            height = ViewGroup.LayoutParams.MATCH_PARENT
+            addRule(RelativeLayout.CENTER_IN_PARENT)
+        }
+
+        // 设置TextureView的尺寸和位置
+        val params = FrameLayout.LayoutParams(finalWidth, finalHeight).apply {
+            gravity = Gravity.CENTER
+        }
+        mTextureView.layoutParams = params
+
+        // 重置变换
+        mTextureView.translationX = - finalWidth / 2f
+        mTextureView.translationY = 0f
+        mTextureView.scaleX = 1f
+        mTextureView.scaleY = 1f
+        mTextureView.rotation = 270f
+
+
+
+        // 强制重新布局
+        binding.videoSurfaceFrame.requestLayout()
     }
 }
